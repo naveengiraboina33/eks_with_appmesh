@@ -1,0 +1,63 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: yelb
+---
+apiVersion: v1
+kind: Service
+metadata:
+  namespace: yelb
+  name: yelb-ui
+  labels:
+    app: yelb-ui
+    tier: frontend
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 80
+      protocol: TCP
+      targetPort: 80
+  selector:
+    app: yelb-ui
+    tier: frontend1
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: yelb
+  name: yelb-ui
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: yelb-ui
+      tier: frontend1
+  template:
+    metadata:
+      labels:
+        app: yelb-ui
+        tier: frontend1
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - frontend
+      containers:
+        - name: yelb-ui
+          image: mreferre/yelb-ui:0.7
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi
+          ports:
+            - containerPort: 80
+
+---
